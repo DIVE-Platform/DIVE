@@ -7,6 +7,7 @@ import Layout from '@/components/Layout';
 import RobotVisualization from '@/plugins/ros-ur-plugin/Robot';
 
 
+
 export default function Page() {
     return (
         <Layout>
