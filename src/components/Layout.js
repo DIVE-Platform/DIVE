@@ -20,7 +20,7 @@ const drawerWidth = 240;
 const drawerWidthClosed = 100;
 
 // Export MainLayout
-export default function MainLayout({ children }) {
+export default function MainLayout({ children, menuItems }) {
     const theme = useTheme();
     const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
     const [open, setOpen] = React.useState(!isMobile);
@@ -39,7 +39,7 @@ export default function MainLayout({ children }) {
             {/* Main Content */}
             <Box component="main"
                 sx={{
-                    marginTop: 5,
+                    marginTop: 6,
                     flexGrow: 1,
                     p: 3,
                     width: {
@@ -67,7 +67,7 @@ export default function MainLayout({ children }) {
             >
 
                 {/* Drawer */}
-                <DrawerComponent open={open} handleDrawerToggle={handleDrawerToggle} />
+                <DrawerComponent open={open} handleDrawerToggle={handleDrawerToggle} menuItems={menuItems} />
 
                 {/* <Toolbar /> */}
                 <Box>

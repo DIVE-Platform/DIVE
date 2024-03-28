@@ -17,7 +17,11 @@ import HomeIcon from '@mui/icons-material/Home';
 
 const drawerWidth = 240;
 
-const DrawerComponent = ({ open, handleDrawerToggle }) => {
+const DrawerComponent = ({ open, handleDrawerToggle, menuItems }) => {
+    const handleHomeClick = () => {
+        window.location.href = '/';
+    };
+
     return (
         <Drawer
             variant="persistent"
@@ -35,15 +39,20 @@ const DrawerComponent = ({ open, handleDrawerToggle }) => {
             <Toolbar />
             <Divider />
             <List>
-                <ListItem button>
+
+                <ListItem button onClick={handleHomeClick}>
                     <ListItemIcon>
                         <HomeIcon />
                     </ListItemIcon>
                     <ListItemText primary="Home" />
                 </ListItem>
-                <Divider /> {/* Divider can be used to separate groups of items */}
-                {/* Add more list items here */}
+                
+                <Divider /> 
+                
             </List>
+
+            {menuItems}
+
         </Drawer>
     );
 };
