@@ -1,5 +1,5 @@
 
-const module = {
+const module_meta = {
     name: 'Robot Dance Basics',
     description: 'Learn the basics of robot dance',
     link: '/module/1',
@@ -19,4 +19,4 @@ const module = {
     ],
 };
 
-export default module;
+export default module_meta;
