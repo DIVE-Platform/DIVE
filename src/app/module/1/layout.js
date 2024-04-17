@@ -20,11 +20,30 @@ import MenuBookIcon from '@mui/icons-material/MenuBook';
 
 // Components
 import Layout from '@/components/Layout';
-import RobotDanceBasics from '@/modules/robot-dance-basics';
+// import RobotDanceBasics from '@/modules/robot-dance-basics';
 
+
+const RobotDanceBasics = {
+    name: 'Robot Dance Basics',
+    description: 'Learn the basics of robot dance',
+    link: '/module/1',
+    chapters: [
+        {
+            name: 'Chapter 1',
+            link: '/module/1/1',
+        },
+        {
+            name: 'Chapter 2',
+            link: '/module/1/2',
+        },
+        {
+            name: 'Chapter 3',
+            link: '/module/1/3',
+        },
+    ],
+};
 
 export default function ModuleLayout({ children, params }) {
-    // const pathname = usePathname()
 
     // Menu Items
     const menuItems = (
@@ -51,10 +70,6 @@ export default function ModuleLayout({ children, params }) {
 
     return (
         <Layout menuItems={menuItems}>
-            {/* <Box>
-                <h1>Module: {params.module}</h1>
-                Link to chapter 1: <a href="/module/1/1">Chapter 1</a>
-            </Box> */}
             {children}
         </Layout>
     );
