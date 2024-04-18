@@ -1,90 +1,64 @@
-"use client";
-
 // React
-import React, { Suspense, useEffect, useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
+import { Suspense } from 'react';
 import { Canvas, useFrame } from '@react-three/fiber';
-import { OrbitControls, useGLTF, Loader, useProgress } from '@react-three/drei';
-
-// MUI
+import { useGLTF, Loader, useProgress, OrbitControls } from '@react-three/drei';
 import Box from '@mui/material/Box';
-import Slider from '@mui/material/Slider';
-
-// Components
-import { useRobotArm } from './context';
-import Controls from './control';
-
 
 // Progress Logger component for GLB models
 const ProgressLogger = () => {
     const { active, progress, errors, item, loaded, total } = useProgress();
     useEffect(() => {
         if (active) {
-            console.log(`${progress}% loaded`);
+            console.log(`${progress}% loaded`); // Log the loading progress percentage
         }
     }, [progress, active]);
 
-    return null;
+    return null; // This component does not render anything to the DOM
 };
 
 // Component for loading GLB models with joint control
-const GLBModel = ({ path, jointAngles }) => {
-    const modelRef = useRef();
-    const { scene } = useGLTF(path);
+const GLBModel = ({ path, joints }) => {
+    const modelRef = useRef(); // Ref to the 3D model for direct manipulation
 
-    useEffect(() => {
-        if (modelRef.current && jointAngles) {
-            // Update joint rotations based on jointAngles
-            jointAngles.forEach((angle, index) => {
-                const joint = modelRef.current.getObjectByName(`Joint_${index + 1}`);
-                if (joint) {
-                    joint.rotation.y = angle;
+    useFrame((state, delta) => {
+        // Animation logic applied each frame
+        joints.forEach((joint, index) => {
+            if (joint.active) {
+                const modelJoint = modelRef.current.getObjectByName(`Joint_${index + 1}`);
+                if (modelJoint) {
+                    const step = delta * joint.rate;
+                    joint.currentAngle += step;
+                    modelJoint.rotation.y = joint.currentAngle;
+                    // Stop animation when target is reached
+                    if ((joint.rate > 0 && joint.currentAngle >= joint.targetAngle) ||
+                        (joint.rate < 0 && joint.currentAngle <= joint.targetAngle)) {
+                        joint.active = false;
+                    }
                 }
-            });
-        }
-    }, [jointAngles]);
+            }
+        });
+    });
+
+    const { scene } = useGLTF(path); // Load the GLB model using the useGLTF hook
 
     return <primitive object={scene} ref={modelRef} />;
 };
 
 // Main Robot visualization component
-export default function RobotVisualization({ sx }) {
-    // const [jointAngles, setJointAngles] = useState(new Array(6).fill(0)); // Assuming 6 joints
-
-    const { jointAngles, handleJointChange } = useRobotArm();
-
-    // const handleJointChange = (index, event, value) => {
-    //     const newAngles = [...jointAngles];
-    //     newAngles[index] = value;
-    //     setJointAngles(newAngles);
-    // };
-
+export default function RobotVisualization({ joints, setJoints, sx }) {
     return (
-        <Box sx={{ width: 600, height: 400, ...sx }}>
+        <Box sx={{ minWidth: 600, minHeight: 400, width: '100%', height: '100%', ...sx }}>
             <Canvas camera={{ position: [0, 0, 5], fov: 15 }}>
                 <ambientLight intensity={0.5} />
                 <pointLight position={[10, 10, 10]} />
                 <Suspense fallback={null}>
-                    {/* Adjust paths as necessary */}
-                    <GLBModel path="/ros-ur-plugin/ur3.glb" jointAngles={jointAngles} />
+                    <GLBModel path="/ros-ur-plugin/ur3.glb" joints={joints} />
                 </Suspense>
                 <OrbitControls />
             </Canvas>
             <ProgressLogger />
             <Loader />
-            {/* Joint Control Sliders */}
-            <Controls />
-            {/* {jointAngles.map((angle, index) => (
-                <Box key={index}>
-                    Joint {index + 1}: 
-                    <Slider
-                        min={-Math.PI}
-                        max={Math.PI}
-                        value={angle}
-                        onChange={(event, value) => handleJointChange(index, event, value)}
-                        step={0.01}
-                    />
-                </Box>
-            ))} */}
         </Box>
     );
 };
