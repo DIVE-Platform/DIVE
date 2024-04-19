@@ -72,43 +72,6 @@ export default function RobotLab() {
     // Inside your component
     const runningRef = React.useRef(false);
 
-    // const handleRun = async () => {
-    //     runningRef.current = true;
-    //     setRunning(true);
-    
-    //     do {
-    //         handleReset();
-
-    //         for (let i = 0; i < cards.length; i++) {
-    //             if (!runningRef.current) break;
-    
-    //             const card = cards[i];
-    //             card.running = true;
-    //             setCards(prevCards => prevCards.map((c, index) => index === i ? {...c, running: true} : c));
-    
-    //             if (card.synchronous) {
-    //                 startAnimation(card.joint - 1, card.angle, card.time);
-    
-    //                 // Break the waiting time into smaller chunks to allow for responsiveness
-    //                 let elapsedTime = 0;
-    //                 const interval = 100; // milliseconds
-    //                 while (elapsedTime < card.time * 1000 && runningRef.current) {
-    //                     await new Promise(resolve => setTimeout(resolve, interval));
-    //                     elapsedTime += interval;
-    //                 }
-    //             } else {
-    //                 startAnimation(card.joint - 1, card.angle, card.time);
-    //             }
-    
-    //             card.running = false;
-    //             setCards(prevCards => prevCards.map((c, index) => index === i ? {...c, running: false} : c));
-    //         }
-    //     } while (repeat && runningRef.current);
-    
-    //     runningRef.current = false;
-    //     setRunning(false);
-    // };    
-
     const handleRun = () => {
         runningRef.current = true;
         setRunning(true);
