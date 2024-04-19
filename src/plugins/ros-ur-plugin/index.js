@@ -21,7 +21,13 @@ import DragDropEdit from '@/plugins/ros-ur-plugin/DragDropEdit';
 import RobotVisualization from '@/plugins/ros-ur-plugin/Robot'; 
 
 
-export default function RobotLab() {
+const defaultExample = [
+    { id: 'card-0', joint: 1, angle: 90, time: 2 },
+    { id: 'card-1', joint: 2, angle: -45, time: 2 },
+    { id: 'card-2', joint: 3, angle: 45, time: 2 },
+];
+
+export default function RobotLab({ loadExample=defaultExample }) {
     // Default card structure
     const defaultCard = {
         id: '',
@@ -79,12 +85,9 @@ export default function RobotLab() {
         handleReset(); // Reset all joints before starting the sequence
 
         cards.forEach((card, index) => {
-            setTimeout(() => {
-                if (!runningRef.current) return;
-    
+            if (!card.synchronous) {
                 startAnimation(card.joint - 1, card.angle, card.time);
                 setCards(prevCards => prevCards.map((c, idx) => idx === index ? {...c, running: true} : c));
-    
                 setTimeout(() => {
                     setCards(prevCards => prevCards.map((c, idx) => idx === index ? {...c, running: false} : c));
                     if (index === cards.length - 1 && repeat && runningRef.current) {
@@ -94,24 +97,42 @@ export default function RobotLab() {
                         setRunning(false);
                     }
                 }, card.time * 1000);
-    
-            }, index * card.time * 1000); // This assumes cards start one after another
+            } else {
+                setTimeout(() => {
+                    if (!runningRef.current) return;
+        
+                    startAnimation(card.joint - 1, card.angle, card.time);
+                    setCards(prevCards => prevCards.map((c, idx) => idx === index ? {...c, running: true} : c));
+        
+                    setTimeout(() => {
+                        setCards(prevCards => prevCards.map((c, idx) => idx === index ? {...c, running: false} : c));
+                        if (index === cards.length - 1 && repeat && runningRef.current) {
+                            handleRun(); // Recursive call to restart the sequence
+                        } else if (index === cards.length - 1) {
+                            runningRef.current = false;
+                            setRunning(false);
+                        }
+                    }, card.time * 1000);
+        
+                }, index * card.time * 1000); // This assumes cards start one after another
+            }
         });
-    };    
+    };
 
     const handleStop = () => {
         // Ensure to set the ref to false to stop the loop
         runningRef.current = false; 
         setRunning(false);
 
-        // Set all cards' 'running' state to false to reflect the UI correctly
-        setCards(prevCards => prevCards.map(card => ({ ...card, running: false })));
-    
         // reset
         handleReset();
     }
 
     const handleReset = () => {
+        
+        // Set all cards' 'running' state to false to reflect the UI correctly
+        setCards(prevCards => prevCards.map(card => ({ ...card, running: false })));
+    
         // for each joint, use startAnimation to reset each to 0, in 0.1 seconds
         for (let i = 0; i < joints.length; i++) {
             startAnimation(i, 0, 0.1);
@@ -123,16 +144,19 @@ export default function RobotLab() {
     }
 
     const loadDefaultCards = () => {
-        setCards([
-            { ...defaultCard, id: 'card-0', joint: 1, angle: 90, time: 2 },
-            { ...defaultCard, id: 'card-1', joint: 2, angle: -45, time: 2 },
-            { ...defaultCard, id: 'card-2', joint: 3, angle: 45, time: 2 },
-        ]);
+        setCards(
+            loadExample.map((card, index) => ({
+                ...defaultCard,
+                ...card,
+                id: `card-${index}`,
+                content: `Item ${index}`
+            }))
+        );
     }
     
     return (
         <Grid container spacing={2} sx={{ backgroundColor: 'lightgray', borderRadius: 5, }}>
-            <Grid item xs={6}>
+            <Grid xs={6}>
                 <Toolbar spacing={2}>
                     <Button variant="contained" onClick={handleAddCard}>Add Action</Button>
                     <Button variant="outlined" onClick={loadDefaultCards} sx={{ mx: 2}}>Load Example</Button>
@@ -152,7 +176,7 @@ export default function RobotLab() {
 
                 />
             </Grid>
-            <Grid item xs={6}>
+            <Grid xs={6}>
                 <RobotVisualization 
                     joints={joints} 
                     setJoints={setJoints} 

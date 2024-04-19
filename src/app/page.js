@@ -8,7 +8,6 @@ import Typography from '@mui/material/Typography';
 
 // Component
 import Layout from '@/components/Layout';
-import RobotVisualization from '@/plugins/ros-ur-plugin/Robot';
 import ModuleCard from '@/components/Card/ModuleCard';
 
 
@@ -19,9 +18,9 @@ export default function Page() {
                 Modules
             </Typography>
             <Stack direction="row" spacing={2} p={2} useFlexGap flexWrap="wrap">
-                <ModuleCard title="Robot Dance Basics" description="Learn the basics of robot dance." link={'/module/1'} />
-                <ModuleCard title="Joint Control" description="Control the robot arm joints." link={'/module/2'} />
-                <ModuleCard title="End Effector Control" description="Control the robot arm end effector." link={'/module/3'} />
+                <ModuleCard title="UR Robot Basics" description="Learn the basics of UR robot conrtols." link={'/module/1/1'} />
+                <ModuleCard title="UR Robot Dance Baiscs" description="Teach the UR robot to dance." link={'/module/2/1'} />
+                <ModuleCard title="UR Robot Advanced" description="Advanced UR robot controls." link={'/module/3/1'} />
             </Stack>
             {/* <h1>Page</h1>
             <RobotVisualization /> */}
