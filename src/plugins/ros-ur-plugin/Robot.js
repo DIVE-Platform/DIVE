@@ -1,90 +1,140 @@
-"use client";
 
 // React
-import React, { Suspense, useEffect, useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
+import { Suspense } from 'react';
 import { Canvas, useFrame } from '@react-three/fiber';
-import { OrbitControls, useGLTF, Loader, useProgress } from '@react-three/drei';
+import { useGLTF, Loader, useProgress, OrbitControls } from '@react-three/drei';
+import { PerspectiveCamera } from '@react-three/drei';
 
 // MUI
 import Box from '@mui/material/Box';
+import Drawer from '@mui/material/Drawer';
+import Typography from '@mui/material/Typography';
 import Slider from '@mui/material/Slider';
+import Button from '@mui/material/Button';
+import SpeedDial from '@mui/material/SpeedDial';
+import SpeedDialIcon from '@mui/material/SpeedDialIcon';
+import SpeedDialAction from '@mui/material/SpeedDialAction';
 
-// Components
-import { useRobotArm } from './context';
-import Controls from './control';
-
+// MUI: Icons
+import ZoomInIcon from '@mui/icons-material/ZoomIn';
+import ZoomOutIcon from '@mui/icons-material/ZoomOut';
+import RestoreIcon from '@mui/icons-material/RestartAlt';
 
 // Progress Logger component for GLB models
 const ProgressLogger = () => {
     const { active, progress, errors, item, loaded, total } = useProgress();
     useEffect(() => {
         if (active) {
-            console.log(`${progress}% loaded`);
+            console.log(`${progress}% loaded`); // Log the loading progress percentage
         }
     }, [progress, active]);
 
-    return null;
+    return null; // This component does not render anything to the DOM
 };
 
 // Component for loading GLB models with joint control
-const GLBModel = ({ path, jointAngles }) => {
-    const modelRef = useRef();
-    const { scene } = useGLTF(path);
+const GLBModel = ({ path, joints }) => {
+    const modelRef = useRef(); // Ref to the 3D model for direct manipulation
 
-    useEffect(() => {
-        if (modelRef.current && jointAngles) {
-            // Update joint rotations based on jointAngles
-            jointAngles.forEach((angle, index) => {
-                const joint = modelRef.current.getObjectByName(`Joint_${index + 1}`);
-                if (joint) {
-                    joint.rotation.y = angle;
+    useFrame((state, delta) => {
+        // Animation logic applied each frame
+        joints.forEach((joint, index) => {
+            if (joint.active) {
+                const modelJoint = modelRef.current.getObjectByName(`Joint_${index + 1}`);
+                if (modelJoint) {
+                    const step = delta * joint.rate;
+                    joint.currentAngle += step;
+                    modelJoint.rotation.y = joint.currentAngle;
+                    // Stop animation when target is reached
+                    if ((joint.rate > 0 && joint.currentAngle >= joint.targetAngle) ||
+                        (joint.rate < 0 && joint.currentAngle <= joint.targetAngle)) {
+                        joint.active = false;
+                    }
                 }
-            });
-        }
-    }, [jointAngles]);
+            }
+        });
+    });
+
+    const { scene } = useGLTF(path); // Load the GLB model using the useGLTF hook
 
     return <primitive object={scene} ref={modelRef} />;
 };
 
-// Main Robot visualization component
-export default function RobotVisualization({ sx }) {
-    // const [jointAngles, setJointAngles] = useState(new Array(6).fill(0)); // Assuming 6 joints
+// Camera SpeedDial component for zoom and reset controls
+const CameraSpeedDial = ({ cameraRef }) => {
+    const zoomStep = 0.1;
 
-    const { jointAngles, handleJointChange } = useRobotArm();
+    const handleZoomIn = () => {
+        if (cameraRef.current) {
+            cameraRef.current.zoom += zoomStep;
+            cameraRef.current.updateProjectionMatrix();
+        }
+    };
 
-    // const handleJointChange = (index, event, value) => {
-    //     const newAngles = [...jointAngles];
-    //     newAngles[index] = value;
-    //     setJointAngles(newAngles);
-    // };
+    const handleZoomOut = () => {
+        if (cameraRef.current) {
+            cameraRef.current.zoom = Math.max(cameraRef.current.zoom - zoomStep, 1); // Prevent zooming out too much
+            cameraRef.current.updateProjectionMatrix();
+        }
+    };
+
+    const handleResetCamera = () => {
+        if (cameraRef.current) {
+            cameraRef.current.position.set(0, 0, 1.5);
+            cameraRef.current.lookAt(0, 0, 0);
+            cameraRef.current.zoom = 1;
+            cameraRef.current.updateProjectionMatrix();
+        }
+    };
 
     return (
-        <Box sx={{ width: 600, height: 400, ...sx }}>
-            <Canvas camera={{ position: [0, 0, 5], fov: 15 }}>
-                <ambientLight intensity={0.5} />
-                <pointLight position={[10, 10, 10]} />
-                <Suspense fallback={null}>
-                    {/* Adjust paths as necessary */}
-                    <GLBModel path="/ros-ur-plugin/ur3.glb" jointAngles={jointAngles} />
-                </Suspense>
-                <OrbitControls />
-            </Canvas>
-            <ProgressLogger />
-            <Loader />
-            {/* Joint Control Sliders */}
-            <Controls />
-            {/* {jointAngles.map((angle, index) => (
-                <Box key={index}>
-                    Joint {index + 1}: 
-                    <Slider
-                        min={-Math.PI}
-                        max={Math.PI}
-                        value={angle}
-                        onChange={(event, value) => handleJointChange(index, event, value)}
-                        step={0.01}
-                    />
-                </Box>
-            ))} */}
+        <SpeedDial
+            ariaLabel="Camera Controls"
+            sx={{ position: 'absolute', bottom: 16, right: 16 }}
+            icon={<ZoomInIcon />}
+        >
+            <SpeedDialAction
+                key="reset_camera"
+                icon={<RestoreIcon />}
+                tooltipTitle="Reset Camera"
+                onClick={handleResetCamera}
+            />
+            <SpeedDialAction
+                key="zoom_in"
+                icon={<ZoomInIcon />}
+                tooltipTitle="Zoom In"
+                onClick={handleZoomIn}
+            />
+            <SpeedDialAction
+                key="zoom_out"
+                icon={<ZoomOutIcon />}
+                tooltipTitle="Zoom Out"
+                onClick={handleZoomOut}
+            />
+        </SpeedDial>
+    );
+};  
+
+// Main Robot visualization component
+export default function RobotVisualization({ joints, setJoints, sx }) {
+    const cameraRef = useRef();
+    return (
+        <Box sx={{ display: 'flex', width: '100%', height: '100%', position: 'relative' }}>
+            <Box sx={{ minWidth: 600, minHeight: 400, width: '100%', height: '100%', maxHeight: 800, ...sx, flexGrow: 1 }}>
+                <Canvas>
+                    <PerspectiveCamera makeDefault position={[0, 0, 1.5]} ref={cameraRef} />
+                    <ambientLight intensity={0.5} />
+                    <pointLight position={[10, 10, 10]} />
+                    <Suspense fallback={null}>
+                        <GLBModel path="/ros-ur-plugin/ur3.glb" joints={joints} />
+                    </Suspense>
+                    <OrbitControls />
+                </Canvas>
+                <ProgressLogger />
+                <Loader />
+            </Box>
+            <CameraSpeedDial cameraRef={cameraRef} />
         </Box>
     );
 };
