@@ -8,7 +8,7 @@ import Grid from '@mui/material/Unstable_Grid2/Grid2';
 
 // Components
 // import RobotVisualization from '@/plugins/ros-ur-plugin/Robot'; 
-import Flow from '@/components/Flow/Flow';
+// import Flow from '@/components/Flow/Flow';
 
 export default function Page({ params }) {
     
@@ -20,7 +20,7 @@ export default function Page({ params }) {
             <Grid container spacing={2} height={"90vh"}>
 
                 <Grid item xs={6}>
-                    <Flow />
+                    {/* <Flow /> */}
                 </Grid>
 
                 <Grid item xs={6}>

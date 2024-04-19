@@ -11,6 +11,10 @@ import Box from "@mui/material/Box";
 import Stack from "@mui/material/Stack";
 import Button from "@mui/material/Button";
 import Toolbar from "@mui/material/Toolbar";
+import Switch from "@mui/material/Switch";
+import FormControl from '@mui/material/FormControl';
+import Typography from "@mui/material/Typography";
+import FormControlLabel from '@mui/material/FormControlLabel';
 
 // Components
 import DragDropEdit from '@/plugins/ros-ur-plugin/DragDropEdit';
@@ -27,9 +31,11 @@ export default function RobotLab() {
         angle: 0,
         time: 2,
         synchronous: true,
+        running: false,
     };
     
     const [running, setRunning] = useState(false);
+    const [repeat, setRepeat] = useState(false);
     const [cards, setCards] = useState([]);
     
     const [joints, setJoints] = useState(new Array(6).fill(null).map(() => ({
@@ -63,47 +69,112 @@ export default function RobotLab() {
         setCards([...cards, newCard]);
     };
 
-    const handleRun = async () => {
+    // Inside your component
+    const runningRef = React.useRef(false);
+
+    // const handleRun = async () => {
+    //     runningRef.current = true;
+    //     setRunning(true);
+    
+    //     do {
+    //         handleReset();
+
+    //         for (let i = 0; i < cards.length; i++) {
+    //             if (!runningRef.current) break;
+    
+    //             const card = cards[i];
+    //             card.running = true;
+    //             setCards(prevCards => prevCards.map((c, index) => index === i ? {...c, running: true} : c));
+    
+    //             if (card.synchronous) {
+    //                 startAnimation(card.joint - 1, card.angle, card.time);
+    
+    //                 // Break the waiting time into smaller chunks to allow for responsiveness
+    //                 let elapsedTime = 0;
+    //                 const interval = 100; // milliseconds
+    //                 while (elapsedTime < card.time * 1000 && runningRef.current) {
+    //                     await new Promise(resolve => setTimeout(resolve, interval));
+    //                     elapsedTime += interval;
+    //                 }
+    //             } else {
+    //                 startAnimation(card.joint - 1, card.angle, card.time);
+    //             }
+    
+    //             card.running = false;
+    //             setCards(prevCards => prevCards.map((c, index) => index === i ? {...c, running: false} : c));
+    //         }
+    //     } while (repeat && runningRef.current);
+    
+    //     runningRef.current = false;
+    //     setRunning(false);
+    // };    
+
+    const handleRun = () => {
+        runningRef.current = true;
         setRunning(true);
-        for (const card of cards) {
-            const joint = joints[card.joint - 1];
-            if (card.synchronous) {
-                await new Promise(resolve => setTimeout(resolve, card.time * 1000));
+
+        handleReset(); // Reset all joints before starting the sequence
+
+        cards.forEach((card, index) => {
+            setTimeout(() => {
+                if (!runningRef.current) return;
+    
                 startAnimation(card.joint - 1, card.angle, card.time);
-            } else {
-                startAnimation(card.joint - 1, card.angle, card.time);
-                await new Promise(resolve => setTimeout(resolve, card.time * 1000));
-            }
-        }
-        setRunning(false);
-    }
+                setCards(prevCards => prevCards.map((c, idx) => idx === index ? {...c, running: true} : c));
+    
+                setTimeout(() => {
+                    setCards(prevCards => prevCards.map((c, idx) => idx === index ? {...c, running: false} : c));
+                    if (index === cards.length - 1 && repeat && runningRef.current) {
+                        handleRun(); // Recursive call to restart the sequence
+                    } else if (index === cards.length - 1) {
+                        runningRef.current = false;
+                        setRunning(false);
+                    }
+                }, card.time * 1000);
+    
+            }, index * card.time * 1000); // This assumes cards start one after another
+        });
+    };    
 
     const handleStop = () => {
+        // Ensure to set the ref to false to stop the loop
+        runningRef.current = false; 
         setRunning(false);
-        setJoints(joints => joints.map(joint => ({
-            ...joint,
-            active: false,
-        })));
+
+        // Set all cards' 'running' state to false to reflect the UI correctly
+        setCards(prevCards => prevCards.map(card => ({ ...card, running: false })));
+    
+        // reset
+        handleReset();
     }
 
     const handleReset = () => {
-        // setCards([]);
-        // for each joint, set current angle to 0 and use startAnimation to set target angle to 0
-        setJoints(joints => joints.map(joint => ({
-            ...joint,
-            targetAngle: 0,
-            rate: -joint.currentAngle / 2,
-            active: true,
-        })));
+        // for each joint, use startAnimation to reset each to 0, in 0.1 seconds
+        for (let i = 0; i < joints.length; i++) {
+            startAnimation(i, 0, 0.1);
+        }
     }
 
+    const handleRepeatChange = (event) => {
+        setRepeat(event.target.checked);
+    }
+
+    const loadDefaultCards = () => {
+        setCards([
+            { ...defaultCard, id: 'card-0', joint: 1, angle: 90, time: 2 },
+            { ...defaultCard, id: 'card-1', joint: 2, angle: -45, time: 2 },
+            { ...defaultCard, id: 'card-2', joint: 3, angle: 45, time: 2 },
+        ]);
+    }
     
     return (
         <Grid container spacing={2} sx={{ backgroundColor: 'lightgray', borderRadius: 5, }}>
             <Grid item xs={6}>
                 <Toolbar spacing={2}>
                     <Button variant="contained" onClick={handleAddCard}>Add Action</Button>
+                    <Button variant="outlined" onClick={loadDefaultCards} sx={{ mx: 2}}>Load Example</Button>
                     <Box sx={{ flexGrow: 1 }} />
+                    <FormControlLabel control={<Switch checked={repeat} onChange={handleRepeatChange} />} label="Repeat" />
                     <Button variant="contained" color="warning" onClick={handleReset} sx={{ mx: 2}}>Reset</Button>
                     {running ? 
                         <Button variant="contained" color="error" onClick={handleStop}>Stop</Button>

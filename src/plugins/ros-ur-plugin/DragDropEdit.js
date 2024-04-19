@@ -46,7 +46,7 @@ function ActionCard({ card, handleUpdateCard, handleDeleteCard }) {
     }
 
     return (
-        <Card sx={{ padding: 2 }}>
+        <Card sx={{ padding: 2, backgroundColor: card.running ? "lightgreen" : "none" }}>
             <Stack direction="row" spacing={2} alignItems="center">
 
                 {/* Select Action (move or not move) */}
