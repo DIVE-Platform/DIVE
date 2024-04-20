@@ -20,7 +20,7 @@ export default function Page() {
             <Stack direction="row" spacing={2} p={2} useFlexGap flexWrap="wrap">
                 <ModuleCard title="UR Robot Basics" description="Learn the basics of UR robot conrtols." link={'/module/1/1'} />
                 <ModuleCard title="UR Robot Dance Baiscs" description="Teach the UR robot to dance." link={'/module/2/1'} />
-                <ModuleCard title="UR Robot Advanced" description="Advanced UR robot controls." link={'/module/3/1'} />
+                <ModuleCard title="UR Robot Advanced" description="Advanced UR robot controls." />
             </Stack>
             {/* <h1>Page</h1>
             <RobotVisualization /> */}
