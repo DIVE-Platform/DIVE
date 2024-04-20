@@ -51,11 +51,11 @@ export default function Page() {
             {/* Navigation buttons */}
             <Stack sx={{ width: '60%', textAlign: 'center', pt: 4, margin: 'auto' }}>
                 <Stack direction="row" spacing={2} justifyContent="space-between">
-                    <Button variant="outlined" color="primary" href="/module/1/2">
+                    <Button variant="outlined" color="primary" href="/module/2/2">
                         Chapter 2
                     </Button>
-                    <Button variant="outlined" color="secondary" href="/">
-                        More Modules
+                    <Button variant="contained" color="primary" href="/module/2/3">
+                        Chpater 3
                     </Button>
                 </Stack>
             </Stack>

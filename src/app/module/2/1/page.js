@@ -37,7 +37,7 @@ export default function Page({ params }) {
                     <Button variant="outlined" color="secondary" href="/">
                         Go back to Modules
                     </Button>
-                    <Button variant="contained" color="primary" href="/module/1/2">
+                    <Button variant="contained" color="primary" href="/module/2/2">
                         Chpater 2
                     </Button>
                 </Stack>
